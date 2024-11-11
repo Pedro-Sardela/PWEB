@@ -44,6 +44,7 @@ function addTarefa(event) {
 
     editTarefa = null;
     fecharJanela();
+    salvarTarefas();
   } else {
     const tarefa = {
       id: `tarefa-${idTarefa++}`,
@@ -125,8 +126,8 @@ function editarTarefa(id) {
   const dataVencimentoTexto = tarefa.querySelector("p:nth-of-type(2)").textContent;
   const dtVenc = dataVencimentoTexto.replace("Vence em: ", "").trim();
   document.getElementById("dtVencimento").value = dtVenc;
-
   editTarefa = tarefa;
+  salvarTarefas();
 }
 
 function deletarTarefa(id) {
@@ -262,29 +263,48 @@ function removerIconeConcluido(tarefa) {
 function carregarTarefas() {
   const tarefasSalvas = JSON.parse(localStorage.getItem("tarefas")) || [];
   tarefasSalvas.forEach((tarefa) => {
-      const elementoTarefa = criarElementoTarefa(tarefa);
-      adicionarTarefa(elementoTarefa, `lista${pLetraMaiusc(tarefa.status)}`);
+    const elementoTarefa = criarElementoTarefa(tarefa);
+    adicionarTarefa(elementoTarefa, `lista${pLetraMaiusc(tarefa.status)}`);
+    
+    const prioricssElement = elementoTarefa.querySelector("#prioricss");
+    aplicarCoresPrioridade(prioricssElement, tarefa.priori);
   });
+
   idTarefa = tarefasSalvas.length ? Math.max(...tarefasSalvas.map(t => parseInt(t.id.split('-')[1]))) + 1 : 0;
 }
-
 function pLetraMaiusc(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 function salvarTarefas() {
   const tarefas = Array.from(document.querySelectorAll(".tarefa")).map((tarefa) => {
-      return {
-          id: tarefa.id,
-          titulo: tarefa.querySelector("#titulocss").textContent,
-          desc: tarefa.querySelector("#desccss").textContent,
-          respon: tarefa.querySelector("#responcss").textContent.replace("Responsáveis: ", "").trim(),
-          priori: tarefa.querySelector("#prioricss").textContent,
-          dtVenc: tarefa.querySelector("#dtcss").textContent.replace("Vence em: ", "").trim(),
-          status: tarefa.parentElement.id.replace("lista", "").toLowerCase()
-      };
+    return {
+      id: tarefa.id,
+      titulo: tarefa.querySelector("#titulocss").textContent,
+      desc: tarefa.querySelector("#desccss").textContent,
+      respon: tarefa.querySelector("#responcss").textContent.replace("Responsáveis: ", "").trim(),
+      priori: tarefa.classList.contains("alta") ? "alta" :
+              tarefa.classList.contains("media") ? "media" :
+              tarefa.classList.contains("baixa") ? "baixa" : "baixa",
+      dtVenc: tarefa.querySelector("#dtcss").textContent.replace("Vence em: ", "").trim(),
+      status: tarefa.parentElement.id.replace("lista", "").toLowerCase()
+    };
   });
+
   localStorage.setItem("tarefas", JSON.stringify(tarefas));
 }
+
+
+function aplicarCoresPrioridade() {
+  const tarefas = document.querySelectorAll(".tarefa");
+
+  tarefas.forEach((tarefa) => {
+    const prioridadeElemento = tarefa.querySelector("#prioricss");
+    const prioridade = prioridadeElemento.textContent.trim();
+    
+    alterarCor(prioridadeElemento, prioridade);
+  });
+}
+
 
 document.addEventListener("DOMContentLoaded", carregarTarefas);
